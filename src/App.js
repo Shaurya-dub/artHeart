@@ -1,20 +1,19 @@
 import firebase from "./firebase";
 import { useState, useEffect } from "react";
-// import { FontawesomeObject } from "@fortawesome/fontawesome-svg-core";
-import { FaHeart } from "react-icons/fa";
-// import ArtworkCard from "./ArtworkCard";
+
+import ArtworkCard from "./ArtworkCard";
 import "./App.css";
 
 // on page load, state is set to all art currently on the page
 // art on page gets sent to firebase as an object
 // when heart is clicked, boolean value on art object is shifted to true, which assigns a class to the icon, turning it red
+// any changed made to the data in firebase cause a re-render and the page updates to show changes
 function App() {
   const [artList, setArtList] = useState([]);
-  const [faveList, setFaveList] = useState([]);
-
+  // function to set initial state that displays all artwork on page
   const setInitialState = () => {
     const dbRef = firebase.database().ref();
-
+    // fires an event anytime data on firebase is changed
     dbRef.on("value", (snapshot) => {
       const artData = snapshot.val();
       console.log(artData);
@@ -28,93 +27,78 @@ function App() {
       console.log(newArray);
       setArtList(newArray);
     });
-  }
-
+  };
+  // set state on page to display data from firebase on the page
   useEffect(() => {
-      setInitialState();
+    setInitialState();
   }, []);
+  // function that toggles the "isItLiked" boolean value in firebase
   const toggleFavourite = function (obj) {
-    // const changer = (obj.isItLiked = !obj.isItLiked);
-    // console.log(obj.isItLiked);
     const dbRef = firebase.database().ref(obj.key);
-    dbRef.child('isItLiked').get().then((property) => {
-      if(!property.val()) {
-        dbRef.update({isItLiked: true})
-      } else {
-        dbRef.update({isItLiked: false})
-      }
-    }) 
-    // if (dbRef.child('isItLiked')) {
-    //   dbRef.update({isItLiked:false});
-    // } else {
-    //         dbRef.update({isItLiked:true});
-
-    // }
-    
-    // else {
-    //   dbRef.child("isItLiked").remove();
-    // }
-    // dbRef.child(obj.key).update({
-    //   obj.value.isItLiked: !obj.value.isItLiked});
-    // console.log(dbRef);
-
-    // console.log(obj.isItLiked);
+    dbRef
+      .child("isItLiked")
+      .get()
+      .then((property) => {
+        if (!property.val()) {
+          dbRef.update({ isItLiked: true });
+        } else {
+          dbRef.update({ isItLiked: false });
+        }
+      });
   };
 
+  // Function that changes state of the page to display only artwork that has been "favourited" by the user
   const showOnlyFavourites = (e) => {
-    if (e.target.innerText === 'Show My Favorites') { 
+    if (e.target.innerText === "Show My Favorites") {
       const copyOfArtList = [...artList];
-    const listWithOnlyLikedArt = copyOfArtList.filter((artObj) => {
-      return artObj.value.isItLiked
-    })
-    console.log(e.target.innerText)
-    setArtList(listWithOnlyLikedArt);
-  e.target.innerText = 'Hide My Favorites'}
-    else {
+      const listWithOnlyLikedArt = copyOfArtList.filter((artObj) => {
+        return artObj.value.isItLiked;
+      });
+      console.log(e.target.innerText);
+      setArtList(listWithOnlyLikedArt);
+      e.target.innerText = "Hide My Favorites";
+    } else {
       setInitialState();
-        e.target.innerText = 'Show My Favorites'
-
+      e.target.innerText = "Show My Favorites";
     }
-  }
+  };
 
   return (
     <div className="App">
       <div className="wrapper">
         <div className="">
-        <h1>Eat Your He<span className='redText'>Art</span> Out</h1>
-        <button onClick={(e) => {
-          showOnlyFavourites(e)
-        }}>Show My Favorites</button>
+          <h1>
+            Eat Your He<span className="redText">Art</span> Out
+          </h1>
+          <p className="headingTag">
+            Click the heart icon to 'favourite' what you like
+          </p>
+          <button
+            onClick={(e) => {
+              showOnlyFavourites(e);
+            }}
+          >
+            Show My Favorites
+          </button>
         </div>
-      {/* <div>
-        <ArtworkCard />
-        <FaHeart
-          onClick={(e) => {
-            console.log(e.target);
-          }}
-        />
-      </div> */}
-      <ul>
-      {artList.map((artCard) => {
-        return (
-          <li key={artCard.key}>
-            <img src={artCard.value.url} alt="" />
-            <div className="artInfo">
-            <h2>{artCard.value.artName}</h2>
-            <h3>{artCard.value.artistName}</h3>
-            
-
-            <FaHeart className={artCard.value.isItLiked ? "heart favourite" : "heart"}
-              onClick={() => {
-                toggleFavourite(artCard);
-              }}
-            />
-            </div>
-          </li>
-        );
-      })}
-      </ul>
+        <ul>
+          {/* function maps through the current state to display results on page */}
+          {artList.map((artCard, key) => {
+            return (
+              <ArtworkCard
+                artCard={artCard}
+                toggleFavourite={toggleFavourite}
+                key={key}
+              />
+            );
+          })}
+        </ul>
       </div>
+      <footer>
+        <p>
+          Made at <a href="https://junocollege.com/">Juno College</a>
+        </p>
+      </footer>
     </div>
     // {}
   );
